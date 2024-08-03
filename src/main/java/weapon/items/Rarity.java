@@ -81,7 +81,7 @@ public class Rarity {
         }else{
             i2 = Double.parseDouble(r2);
         }
-        if(i2 != 0) {
+        if(i2 != 0 && i2 > i1) {
             return new Random().nextInt((int)Math.round(i2) - (int)i1 + 1)+ ((int)i1);
         }else{
             return (int) i1;

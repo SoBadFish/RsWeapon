@@ -64,14 +64,14 @@ public class PlayerAddAttributes {
         return health;
     }
 
-    public static int getNumberUp(Object r,int up){
+    public static double getNumberUp(Object r,Number up){
         if(r instanceof String){
             String r1 = r.toString();
             if(r1.matches("^([0-9.]+)[ ]*%$")) {
                 int a1 = Integer.parseInt(r1.split("%")[0]);
                 a1 /= 100;
                 if (a1 > 0) {
-                    return (up * a1);
+                    return (up.doubleValue() * a1);
                 }
             }
         }else if(r instanceof Integer){
@@ -130,6 +130,7 @@ public class PlayerAddAttributes {
         if(items.size() > 0){
             for (BaseItem item:items){
                 if(item instanceof Armor){
+
                     armor += ((Armor) item).getArmor();
                 }
             }

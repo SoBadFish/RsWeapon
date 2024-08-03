@@ -10,17 +10,32 @@ import cn.nukkit.item.enchantment.Enchantment;
 import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.nbt.tag.ListTag;
 import cn.nukkit.nbt.tag.StringTag;
+import cn.nukkit.utils.Config;
 import weapon.RsWeapon;
 import weapon.players.effects.BaseEffect;
 import weapon.players.effects.MineCraftEffect;
 import weapon.players.effects.PlayerEffect;
+import weapon.utils.PlayerAddAttributes;
 import weapon.utils.RsWeaponSkill;
 import weapon.utils.Skill;
+import weapon.utils.SkillManager;
 
 import java.util.*;
 
 /** @author 若水*/
 public abstract class BaseItem implements Cloneable{
+
+    public Config config;
+
+    private static final String EFFECT = "效果";
+
+    private static final String COLD = "冷却(s)";
+
+    public static final  String WEAPON = "武器";
+
+    public static final  String ARMOR = "盔甲";
+
+    public SkillManager skillManager = new SkillManager();
 
     String type;
 
@@ -30,12 +45,12 @@ public abstract class BaseItem implements Cloneable{
 
     int count,money;
     final static String TAG_NAME = "RsWeaponName";
-    Item item;
-    String master;
+    public Item item;
+    public String master;
 
-    String name;
+    public String name;
 
-    String message;
+    public String message;
 
     public String getName() {
         return name;
@@ -84,6 +99,9 @@ public abstract class BaseItem implements Cloneable{
     }
 
     static Item toItemByMap(String id){
+        if(id.split(":").length == 1){
+            id = id+":0";
+        }
         return Item.fromString(id);
     }
 
@@ -116,7 +134,7 @@ public abstract class BaseItem implements Cloneable{
         return new CompoundTag();
     }
 
-    CompoundTag getCompoundTag(CompoundTag tag,boolean unBreak,String name, String tagName, LinkedList<GemStone> gemStoneLinkedList){
+    protected CompoundTag getCompoundTag(CompoundTag tag,boolean unBreak,String name, String tagName, LinkedList<GemStone> gemStoneLinkedList){
         tag.putString(TAG_NAME,tagName);
         tag.putString(tagName+"name",name);
         if(unBreak){
@@ -177,7 +195,7 @@ public abstract class BaseItem implements Cloneable{
 
 
 
-    StringBuilder skillGetString(LinkedList<BaseEffect> effects, String type){
+    protected StringBuilder skillGetString(LinkedList<BaseEffect> effects, String type){
         StringBuilder builder = new StringBuilder();
         if(effects.size() == 0){
             builder.append("§c无");
@@ -214,7 +232,7 @@ public abstract class BaseItem implements Cloneable{
 
 
 
-    static String getItemName(Item item){
+    public static String getItemName(Item item){
         if(item.hasCompoundTag()){
             CompoundTag tag = item.getNamedTag();
             if(tag.contains(BaseItem.TAG_NAME)){
@@ -225,48 +243,94 @@ public abstract class BaseItem implements Cloneable{
         return null;
     }
 
-    String skillToString(LinkedList<GemStone> gemStoneLinkedList,boolean isWeapon){
-        StringBuilder builder = new StringBuilder();
-        LinkedList<BaseEffect> effects = new LinkedList<>();
-        LinkedList<BaseEffect> damages = new LinkedList<>();
+    public SkillManager getAllSkill(LinkedList<GemStone> gemStoneLinkedList,boolean isWeapon){
+        SkillManager skillManager = new SkillManager();
+        LinkedList<BaseEffect> sw,sd,sae,sad;
+        if(isWeapon){
+            sw = getWeaponEffect();
+            if(sw.size() > 0){
+                for(BaseEffect effect:sw){
+                    if(!skillManager.effect.contains(effect)){
+                        skillManager.effect.add(effect);
+                    }
+                }
+            }
+            sd = getWeaponDamages();
+            if(sd.size() > 0){
+                for(BaseEffect effect:sd){
+                    if(!skillManager.damages.contains(effect)){
+                        skillManager.damages.add(effect);
+                    }
+                }
+            }
+        }else{
+            sae = getArmorEffect();
+            if(sae.size() > 0){
+                for(BaseEffect effect:sae){
+                    if(!skillManager.effect.contains(effect)){
+                        skillManager.effect.add(effect);
+                    }
+                }
+            }
+            sad = getArmorDamages();
+            if(sad.size() > 0){
+                for(BaseEffect effect:sad){
+                    if(!skillManager.damages.contains(effect)){
+                        skillManager.damages.add(effect);
+                    }
+                }
+            }
+        }
         for (GemStone stone:gemStoneLinkedList) {
             if(isWeapon){
-                if(stone.getWeaponEffect().size() > 0){
-                    for(BaseEffect effect:stone.getWeaponEffect()){
-                        if(!effects.contains(effect)){
-                            effects.add(effect);
+                sw = stone.getWeaponEffect();
+                if(sw.size() > 0){
+                    for(BaseEffect effect:sw){
+                        if(!skillManager.effect.contains(effect)){
+                            skillManager.effect.add(effect);
                         }
                     }
                 }
-                if(stone.getWeaponDamages().size() > 0){
-                    for(BaseEffect effect:stone.getWeaponDamages()){
-                        if(!damages.contains(effect)){
-                            damages.add(effect);
+                sd = stone.getWeaponDamages();
+                if(sd.size() > 0){
+                    for(BaseEffect effect:sd){
+                        if(!skillManager.damages.contains(effect)){
+                            skillManager.damages.add(effect);
                         }
                     }
                 }
             }else{
-                if(stone.getArmorEffect().size() > 0){
-                    for(BaseEffect effect:stone.getArmorEffect()){
-                        if(!effects.contains(effect)){
-                            effects.add(effect);
+                sae = stone.getArmorEffect();
+                if(sae.size() > 0){
+                    for(BaseEffect effect:sae){
+                        if(!skillManager.effect.contains(effect)){
+                            skillManager.effect.add(effect);
                         }
                     }
                 }
-                if(stone.getArmorDamages().size() > 0){
-                    for(BaseEffect effect:stone.getArmorDamages()){
-                        if(!damages.contains(effect)){
-                            damages.add(effect);
+                sad = stone.getArmorDamages();
+                if(sad.size() > 0){
+                    for(BaseEffect effect:sad){
+                        if(!skillManager.damages.contains(effect)){
+                            skillManager.damages.add(effect);
                         }
                     }
                 }
             }
         }
-        if(effects.size() > 0){
-            builder.append(skillGetString(effects,"§b[被动]"));
+        return skillManager;
+
+    }
+
+    protected String skillToString(LinkedList<GemStone> gemStoneLinkedList,boolean isWeapon){
+        StringBuilder builder = new StringBuilder();
+        SkillManager skillManager = getAllSkill(gemStoneLinkedList, isWeapon);
+
+        if(skillManager.effect.size() > 0){
+            builder.append(skillGetString(skillManager.effect,"§b[被动]"));
         }
-        if(damages.size() > 0){
-            builder.append(skillGetString(damages,"§9[主动]"));
+        if(skillManager.damages.size() > 0){
+            builder.append(skillGetString(skillManager.damages,"§9[主动]"));
         }
         return builder.toString();
     }
@@ -316,6 +380,9 @@ public abstract class BaseItem implements Cloneable{
         return false;
     }
 
+    public double getUpDataAttribute(String key,double value) {
+        return PlayerAddAttributes.getNumberUp(config.get(key,0d),value);
+    }
 
     public boolean canUpData(){
         return false;
@@ -376,6 +443,46 @@ public abstract class BaseItem implements Cloneable{
         return true;
     }
 
+    public void loadSkill(Config config){
+        Object skillObject = config.get("技能");
+        if(skillObject instanceof Map){
+            Map skill = (Map) skillObject;
+            for(Object skillName:skill.keySet()){
+                if(skillName instanceof String){
+                    Skill skills = RsWeaponSkill.getSkill((String) skillName);
+                    if(skills != null){
+                        Map f = (Map) skill.get(skills.getName());
+                        if(skills.getType().equals(Skill.PASSIVE)){
+                            if(f.containsKey(EFFECT) && (int) f.get(EFFECT) > 0){
+                                skillManager.effect.add(new PlayerEffect(skills.getName(),(int)f.get(EFFECT),(int)f.get(COLD)));
+                            }
+                        }else if(skills.getType().equals(Skill.ACTIVE)){
+                            if(f.containsKey(EFFECT) &&(int)f.get(EFFECT) > 0){
+                                skillManager.damages.add(new PlayerEffect(skills.getName(),(int)f.get(EFFECT),(int)f.get(COLD)));
+                            }
+                        }
+                    }
+                }
+            }
+        }else{
+            /* 保留旧版....*/
+            for(Skill skillName:RsWeaponSkill.getSkillList()){
+                Map f = (Map) config.get(skillName.getName());
+                if(f != null){
+                    if(skillName.getType().equals(Skill.PASSIVE)){
+                        if(f.containsKey(EFFECT) && (int) f.get(EFFECT) > 0){
+                            skillManager.effect.add(new PlayerEffect(skillName.getName(),(int)f.get(EFFECT),(int)f.get(COLD)));
+                        }
+                    }else if(skillName.getType().equals(Skill.ACTIVE)){
+                        if(f.containsKey(EFFECT) && (int)f.get(EFFECT) > 0){
+                            skillManager.damages.add(new PlayerEffect(skillName.getName(),(int)f.get(EFFECT),(int)f.get(COLD)));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     boolean runCanInlay(GemStone stone, LinkedList<GemStone> gemStoneLinkedList
             , int level, int count, String rpgAttribute, int rpgPF){
         if(stone != null){
@@ -416,6 +523,83 @@ public abstract class BaseItem implements Cloneable{
         return false;
     }
 
+    private LinkedList<BaseEffect> getDamages() {
+        return skillManager.damages;
+    }
+
+    private LinkedList<BaseEffect> getEffect() {
+        return skillManager.effect;
+    }
+
+    public void addSkill(Skill skill,int time,int cold){
+        if(skill.equalsUse(WEAPON)){
+            if(skill.getType().equals(Skill.ACTIVE)){
+                skillManager.damages.add(new PlayerEffect(skill.getName(),time,cold));
+            }else{
+                skillManager.effect.add(new PlayerEffect(skill.getName(),time,cold));
+            }
+        }else if(skill.equalsUse(ARMOR)){
+            if(!skill.getType().equals(Skill.ACTIVE)){
+                skillManager.effect.add(new PlayerEffect(skill.getName(),time,cold));
+            }
+        }
+    }
+
+
+    public LinkedList<BaseEffect> getWeaponDamages(){
+        return baseEffects(skillManager.damages,true,true);
+    }
+
+    public LinkedList<BaseEffect> getWeaponEffect(){
+        return baseEffects(skillManager.effect,true,false);
+    }
+
+    public LinkedList<BaseEffect> getArmorDamages(){
+        return baseEffects(skillManager.damages,false,true);
+    }
+
+    public LinkedList<BaseEffect> getArmorEffect(){
+        return baseEffects(skillManager.effect,false,false);
+    }
+
+
+    private LinkedList<BaseEffect> baseEffects(LinkedList<BaseEffect> baseEffects, boolean isWeapon, boolean isDamage){
+        LinkedList<BaseEffect> effects = new LinkedList<>();
+        if(baseEffects.size() > 0){
+            for (BaseEffect effect:baseEffects){
+                if(isWeapon){
+                    if(isDamage){
+                        canAdd(effects, effect, WEAPON);
+                    }else{
+                        if(effect instanceof PlayerEffect){
+                            continue;
+                        }
+                        effects.add(effect);
+                    }
+                }else{
+                    if(!isDamage){
+                        canAdd(effects, effect, ARMOR);
+                    }
+                }
+            }
+        }
+        return effects;
+    }
+
+    private void canAdd(LinkedList<BaseEffect> effects, BaseEffect effect, String weapon) {
+        if(effect instanceof PlayerEffect){
+            Skill skill = RsWeaponSkill.getSkill(effect.getBufferName());
+            if(skill != null){
+                if(!skill.equalsUse(weapon)){
+                    return;
+                }
+            }else{
+                return;
+            }
+        }
+        effects.add(effect);
+    }
+
     /**
      * 显示lore信息
      * @return lore数组
@@ -432,6 +616,10 @@ public abstract class BaseItem implements Cloneable{
     }
 
     public boolean toRarity(){
+        return toRarity(-1);
+    }
+
+    public boolean toRarity(int i){
         return false;
     }
 

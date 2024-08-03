@@ -74,7 +74,6 @@ public class TextEntity extends Entity {
             close = true;
         }
 
-
         close = true;
         return hasUpdate;
     }

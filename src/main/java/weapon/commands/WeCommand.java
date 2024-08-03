@@ -21,7 +21,7 @@ import java.util.List;
 
 public class WeCommand extends Command {
     public WeCommand(String name) {
-        super(name,"§c武器系统","/we help");
+        super(name,"§c武器系统","/"+RsWeapon.getInstance().getConfig().getString("自定义指令名称","we")+" help");
         this.setPermission("op");
     }
 
@@ -37,14 +37,47 @@ public class WeCommand extends Command {
                 switch (strings[0]){
                     case "help":
                         commandSender.sendMessage("§7=================================");
-                        commandSender.sendMessage("§b/we add weapon <武器名称> <ID:Damage> §a添加武器");
-                        commandSender.sendMessage("§b/we add armor <盔甲名称> <ID:Damage> <宝石名称(可选)>§a添加盔甲");
-                        commandSender.sendMessage("§b/we give weapon <武器名称> <Player> <宝石名称(可选)> <是否绑定(默认true)>§a给玩家武器");
-                        commandSender.sendMessage("§b/we give armor <盔甲名称> <Player> <是否绑定(默认true)>§a给玩家盔甲");
-                        commandSender.sendMessage("§b/we addItem <宝石名称> <ID:Damage> §a添加宝石");
-                        commandSender.sendMessage("§b/we giveItem <宝石名称> <Player> §a给玩家宝石");
-                        commandSender.sendMessage("§b/we reload §a重新加载");
+                        commandSender.sendMessage("§b/"+RsWeapon.getInstance().getConfig().getString("自定义指令名称","we")+" add weapon <武器名称> <ID:Damage> §a添加武器");
+                        commandSender.sendMessage("§b/"+RsWeapon.getInstance().getConfig().getString("自定义指令名称","we")+" add armor <盔甲名称> <ID:Damage> <宝石名称(可选)>§a添加盔甲");
+                        commandSender.sendMessage("§b/"+RsWeapon.getInstance().getConfig().getString("自定义指令名称","we")+" set <稀有度(整数)> §a设置手持武器/盔甲的稀有度");
+                        commandSender.sendMessage("§b/"+RsWeapon.getInstance().getConfig().getString("自定义指令名称","we")+" give weapon <武器名称> <Player> <宝石名称(可选)> <是否绑定(默认true)>§a给玩家武器");
+                        commandSender.sendMessage("§b/"+RsWeapon.getInstance().getConfig().getString("自定义指令名称","we")+" give armor <盔甲名称> <Player> <是否绑定(默认true)>§a给玩家盔甲");
+                        commandSender.sendMessage("§b/"+RsWeapon.getInstance().getConfig().getString("自定义指令名称","we")+" addItem <宝石名称> <ID:Damage> §a添加宝石");
+                        commandSender.sendMessage("§b/"+RsWeapon.getInstance().getConfig().getString("自定义指令名称","we")+" giveItem <宝石名称> <Player> §a给玩家宝石");
+                        commandSender.sendMessage("§b/"+RsWeapon.getInstance().getConfig().getString("自定义指令名称","we")+" reload §a重新加载");
                         commandSender.sendMessage("§7=================================");
+                        break;
+                    case "set":
+                        if(commandSender instanceof Player){
+                            if(args.size() > 1){
+                                try{
+                                    int i = Integer.parseInt(args.get(1));
+                                    Item item = ((Player) commandSender).getInventory().getItemInHand();
+                                    BaseItem item1 = BaseItem.getBaseItem(item);
+                                    if(item1 != null) {
+                                        if (item1.isWeapon() || item1.isArmor()) {
+                                            item1.toRarity(i);
+                                            ((Player) commandSender).getInventory().setItemInHand(item1.toItem());
+                                            commandSender.sendMessage("§b设置成功");
+
+                                            return true;
+                                        }
+                                    }
+                                    commandSender.sendMessage("§c请手持装备 或者 盔甲");
+
+                                }catch (Exception e){
+                                    commandSender.sendMessage("§c请输入正确的稀有度");
+
+                                }
+                            }else{
+                                return false;
+                            }
+
+                        }else{
+                            commandSender.sendMessage("§c请在游戏内执行");
+                            return false;
+                        }
+
                         break;
                     case "add":
                         String weaponName = args.get(2);
@@ -133,7 +166,7 @@ public class WeCommand extends Command {
                                     commandSender.sendMessage(TextFormat.RED+"此武器不存在");
                                     return  true;
                                 }
-                                isMaster = true;
+                                isMaster = false;
                                 Weapon weapon = Weapon.getInstance(name);
                                 if(weapon != null){
                                     if(weapon.isCanUp()){

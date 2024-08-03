@@ -3,10 +3,14 @@ package weapon.commands;
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
 
-public class WeShowCommand extends Command {
-
-    public WeShowCommand(String name) {
-        super(name,"显示手持武器的套装效果");
+/**
+ * @author SmallasWater
+ * Create on 2021/2/25 12:26
+ * Package weapon.commands
+ */
+public class WeaponSettingCommand extends Command {
+    public WeaponSettingCommand(String name) {
+        super(name);
     }
 
     @Override

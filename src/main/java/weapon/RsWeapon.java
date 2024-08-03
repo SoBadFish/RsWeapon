@@ -30,8 +30,11 @@ import weapon.utils.RsWeaponSkill;
 import weapon.utils.Skill;
 import weapon.utils.math.Calculator;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -147,7 +150,7 @@ public class RsWeapon extends PluginBase {
         this.getServer().getScheduler().scheduleRepeatingTask(new FixPlayerInventoryTask(),20);
         this.getServer().getCommandMap().register("",new ClickCommand("click"));
         this.getServer().getCommandMap().register("",new MasterCommand("ms"));
-        this.getServer().getCommandMap().register("",new WeCommand("we"));
+        this.getServer().getCommandMap().register("",new WeCommand(getConfig().getString("自定义指令名称","we")));
         this.getServer().getCommandMap().register("",new ReloadCommand("up"));
         this.getServer().getCommandMap().register("",new UpDataCommand("ups"));
         this.getServer().getCommandMap().register("",new ShowMessageCommand("wm"));
@@ -183,11 +186,11 @@ public class RsWeapon extends PluginBase {
     }
 
     private File getSkillFile(){
-        return new File(this.getDataFolder()+ "/skill.yml");
+        return new File(this.getDataFolder()+"/skill.yml");
     }
 
     private File getSuitFile(){
-        return new File(this.getDataFolder()+ "/suit.yml");
+        return new File(this.getDataFolder()+"/suit.yml");
     }
 
     private File getModFile(){
@@ -332,6 +335,7 @@ public class RsWeapon extends PluginBase {
 //        }
 //    }
 
+
     private String readFile(File file){
         String content = "";
         try{
@@ -397,6 +401,7 @@ public class RsWeapon extends PluginBase {
         if(!getSkillFile().exists()){
             saveResource("skill.yml");
         }
+        int i = 0;
         Config config = new Config(getSkillFile(),Config.YAML);
         Map<String,Object> map = config.getAll();
         for (String skillName:map.keySet()) {
@@ -404,8 +409,10 @@ public class RsWeapon extends PluginBase {
             String message = (String) values.get("效果内容");
             String type = (String) values.get("类型");
             List canUse = (List) values.get("可用装备");
+            i++;
             RsWeaponSkill.addSkill(new Skill(skillName,message,type,(String[])canUse.toArray(new String[0])));
         }
+        this.getLogger().info("已加载 "+i+"个技能");
     }
 
     public void loadWeapon(){
@@ -449,9 +456,7 @@ public class RsWeapon extends PluginBase {
     }
 
 
-    public int getUpDataAttribute(int r){
-        return PlayerAddAttributes.getNumberUp(getConfig().get("强化增加属性",1),r);
-    }
+
 
     public int getUpDataMoney(int level,int c){
         String s = getConfig().getString("强化消耗金币算法","({稀有度} * 5000) * {强化等级}");

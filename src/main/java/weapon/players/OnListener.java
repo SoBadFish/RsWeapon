@@ -19,7 +19,9 @@ import cn.nukkit.event.player.*;
 import cn.nukkit.item.Item;
 import cn.nukkit.item.ItemBow;
 import cn.nukkit.item.ItemBowl;
+import cn.nukkit.level.Sound;
 import cn.nukkit.level.particle.DestroyBlockParticle;
+import cn.nukkit.level.particle.HugeExplodeSeedParticle;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.network.protocol.PlayerSkinPacket;
 import cn.nukkit.utils.TextFormat;
@@ -35,10 +37,7 @@ import weapon.players.effects.PlayerEffect;
 import weapon.players.effects.PlayerEffects;
 import weapon.task.PlayerAddEffectTask;
 import weapon.task.PlayerAddHealthTask;
-import weapon.utils.Effects;
-import weapon.utils.PlayerAddAttributes;
-import weapon.utils.RsWeaponSkill;
-import weapon.utils.Skill;
+import weapon.utils.*;
 
 
 import java.util.LinkedList;
@@ -79,6 +78,7 @@ public class OnListener implements Listener {
         Server.getInstance().getScheduler().scheduleRepeatingTask(new PlayerAddEffectTask(player),20);
     }
 
+
   
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -93,6 +93,10 @@ public class OnListener implements Listener {
                 return;
             }
             if(damagePlayer instanceof Player){
+
+                if(event.getCause() == EntityDamageEvent.DamageCause.SUFFOCATION){
+                    return;
+                }
                 Item item = ((Player) damagePlayer).getInventory().getItemInHand();
                 if(Weapon.isWeapon(item)){
                     if(bow.contains(damagePlayer)){
@@ -146,6 +150,12 @@ public class OnListener implements Listener {
         if(playerEffects.containsEffect(baseEffect)){
             String skillName = skill.getName();
             switch (skillName) {
+                case PlayerEffect.ADD_HEALTH_DEFAULT:
+                    playerEffects.addEffect(((PlayerEffect) baseEffect).clone());
+                    damagePlayer.heal(baseEffect.getTime());
+                    Effects.addHealth(damagePlayer);
+                    ((Player) damagePlayer).sendTip(TextFormat.RED + "吸血触发 血量 +" + baseEffect.getTime() + " 冷却 " + baseEffect.getCold() + " 秒");
+                    break;
                 case PlayerEffect.ICE:
                     if (entity instanceof Player) {
                         PlayerEffects playerEffects2 = PlayerEffects.getDamageEffect(entity.getName());
@@ -287,8 +297,20 @@ public class OnListener implements Listener {
                 }
                 kick = kick - (float) dKick;
                 int toDamage = PlayerAddAttributes.getToDamage((Player) entity);
+                if(!event.getCause().equals(EntityDamageEvent.DamageCause.SUFFOCATION)){
+                    if(damage > 0){
+                        if(toDamage > 0){
+                            float toD = damage * (toDamage / 100.0f);
+                            if(toD < 0){
+                                toD = 0;
+                            }
+                            if(toD > 1){
+                                damagePlayer.attack(new EntityDamageEvent(entity,EntityDamageEvent.DamageCause.SUFFOCATION,toD));
+                            }
+                        }
+                    }
+                }
                 for (BaseEffect effect:entityEffects){
-
                     if(effect instanceof PlayerEffect){
                         Skill skill = RsWeaponSkill.getSkill(effect.getBufferName());
                         if(skill != null){
@@ -310,19 +332,12 @@ public class OnListener implements Listener {
                         addMineCraftEffects(entity, (Player) damagePlayer, playerEffects2, effect);
                     }
                 }
-                if(!event.getCause().equals(EntityDamageEvent.DamageCause.SUFFOCATION)){
-                    if(damage > 0){
-                        if(toDamage > 0){
-                            float toD = damage * toDamage / 100;
-                            if(toD < 0){
-                                toD = 0;
-                            }
-                            damagePlayer.attack(new EntityDamageEvent(entity,EntityDamageEvent.DamageCause.SUFFOCATION,toD));
-                        }
-                    }
-                }
+
                 if(kick < 0){
                     kick = 0F;
+                }
+                if(damage < 0){
+                    damage = 1F;
                 }
                 event.setDamage(damage);
                 ((EntityDamageByEntityEvent) event).setKnockBack(kick);
@@ -345,10 +360,12 @@ public class OnListener implements Listener {
                         if(skill != null){
                             if(playerEffects2.containsEffect(effect)){
                                 playerEffects2.addEffect(((PlayerEffect) effect).clone());
-
+                                for(Player p: DataTools.getAroundPlayers(player,5)){
+                                    p.attack(new EntityDamageByEntityEvent(player,p, EntityDamageEvent.DamageCause.ENTITY_ATTACK,effect.getTime(),0.5f));
+                                }
+                                player.level.addParticle(new HugeExplodeSeedParticle(player));
+                                player.level.addSound(player, Sound.RANDOM_EXPLODE);
                             }
-
-
                         }
                     }
                     return;

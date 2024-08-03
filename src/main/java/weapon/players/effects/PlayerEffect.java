@@ -19,6 +19,8 @@ public class PlayerEffect extends BaseEffect {
 
     public static final String EXPLODE = "爆破";
 
+    public static final String ADD_HEALTH_DEFAULT = "固定吸血";
+
 
     public PlayerEffect(String bufferName,int load,int time){
         this.bufferName = bufferName;

@@ -10,6 +10,8 @@ import cn.nukkit.utils.Config;
 import me.onebone.economyapi.EconomyAPI;
 import weapon.RsWeapon;
 import weapon.players.effects.BaseEffect;
+import weapon.utils.PlayerAddAttributes;
+
 import java.io.File;
 import java.util.*;
 
@@ -130,7 +132,7 @@ public class Weapon extends BaseItem {
      * @return 被动
      * */
     public LinkedList<BaseEffect> getEffects(){
-        LinkedList<BaseEffect> effects = new LinkedList<>();
+        LinkedList<BaseEffect> effects = new LinkedList<>(getWeaponEffect());
         if(gemStoneLinkedList.size() > 0){
             for (GemStone stone:gemStoneLinkedList) {
                 effects.addAll(stone.getWeaponEffect());
@@ -153,7 +155,7 @@ public class Weapon extends BaseItem {
      * @return 主动
      * */
     public LinkedList<BaseEffect> getDamages(){
-        LinkedList<BaseEffect> effects = new LinkedList<>();
+        LinkedList<BaseEffect> effects = new LinkedList<>(getWeaponDamages());
         if(gemStoneLinkedList.size() > 0){
             for (GemStone stone:gemStoneLinkedList) {
                 effects.addAll(stone.getWeaponDamages());
@@ -161,6 +163,8 @@ public class Weapon extends BaseItem {
         }
         return effects;
     }
+
+
 
     private void setMessage(String message) {
         this.message = message;
@@ -207,6 +211,8 @@ public class Weapon extends BaseItem {
 
         String deathMessage = config.getString("击杀提示");
         Weapon weapon = new Weapon(item,min,max,kick,level,count,un,deathMessage);
+        weapon.loadSkill(config);
+        weapon.config = config;
         Object up = config.get("稀有度");
         int levelUp = 0;
         if(up != null){
@@ -229,7 +235,7 @@ public class Weapon extends BaseItem {
         weapon.setName(name);
         weapon.setMoney(money);
         weapon.setUpdata(updata);
-        weapon.setLevelUp(config.getInt("稀有度"));
+//        weapon.setLevelUp(config.getInt("稀有度"));
         weapon.setNameTag(config.getString("名称",name));
 
         weapon.setCanShow(config.getBoolean("是否在创造背包显示",false));
@@ -353,9 +359,8 @@ public class Weapon extends BaseItem {
         lore.add("§r§6◈§7击退§6◈ §a"+String.format("%.1f",getKick())+"");
         lore.add("§r§6◈§7宝石§6◈§7(§a"+(getCount() - getGemStones().size())+"§7)§6◈ "+getStoneString(gemStoneLinkedList));
         lore.add("§r§6◈§f═§7╞════════════╡§f═");
-        if(gemStoneLinkedList.size() > 0){
-            lore.add(skillToString(gemStoneLinkedList,true));
-        }
+        lore.add(skillToString(gemStoneLinkedList,true));
+
         return lore.toArray(new String[0]);
     }
 
@@ -374,21 +379,35 @@ public class Weapon extends BaseItem {
     }
 
 
-
-    private int[] getRarity(){
+    private int[] getRarity(int i){
+        if(i < 0){
+            i  = new Random().nextInt(RsWeapon.rarity.size());
+        }
         Weapon weapon = Weapon.getInstance(name);
         if(weapon != null) {
-            int r = new Random().nextInt(RsWeapon.rarity.size());
-            Rarity rarity = RsWeapon.getInstance().getLevelUpByString(r);
-            return new int[]{r
+            Rarity rarity = RsWeapon.getInstance().getLevelUpByString(i);
+            return new int[]{i
                     , rarity.getRound((weapon.max))};
         }
         return new int[0];
     }
+
+    private int[] getRarity(){
+        return getRarity(new Random().nextInt(RsWeapon.rarity.size()));
+
+    }
     @Override
     public boolean toRarity() {
+        return toRarity(-1);
+    }
+
+    @Override
+    public boolean toRarity(int i) {
         CompoundTag tag = item.getNamedTag();
-        tag.putIntArray(Weapon.tagName+"levelUp",getRarity());
+        if(tag == null){
+            tag = new CompoundTag();
+        }
+        tag.putIntArray(Weapon.tagName+"levelUp",getRarity(i));
         item.setNamedTag(tag);
         return true;
     }
@@ -396,6 +415,7 @@ public class Weapon extends BaseItem {
     private void reload(CompoundTag tag){
         Weapon weapon = Weapon.getInstance(name);
         if(weapon != null){
+            this.config = weapon.config;
             this.money = weapon.money;
             this.level = weapon.level;
             this.kick = weapon.kick;
@@ -430,10 +450,16 @@ public class Weapon extends BaseItem {
             }
             if(tag.contains(tagName+"upData")){
                 for(int level = 1;level <= tag.getInt(tagName+"upData");level++){
-                    int add1 =  RsWeapon.getInstance().getUpDataAttribute(min);
-                    int add2 =  RsWeapon.getInstance().getUpDataAttribute(max);
-                    if(add1 > 0 && add2 > 0){
+                    int add1 = (int) getUpDataAttribute("强化加成.武器攻击力.min",min);
+                    int add2 = (int) getUpDataAttribute("强化加成.武器攻击力.max",max);
+                    double kick = getUpDataAttribute("强化加成.武器击退",this.kick);
+                    if(kick > 0){
+                        this.kick += kick;
+                    }
+                    if(add1 > 0){
                         this.min += add1;
+                    }
+                    if(add2 > 0) {
                         this.max += add2;
                     }
                 }
@@ -453,14 +479,6 @@ public class Weapon extends BaseItem {
         return level;
     }
 
-//    public int getDamage() {
-//        int min = this.min,max = this.max;
-//        int[] tag1 = item.getNamedTag().getIntArray(tagName+"levelUp");
-//        int aup = tag1[1];
-//        min += aup;
-//        max += aup;
-//        return new Random().nextInt((max - min + 1))+ (min);
-//    }
 
     public static boolean isWeapon(Item item){
         if(item == null){
@@ -549,6 +567,8 @@ public class Weapon extends BaseItem {
     public boolean canRemove(GemStone stone){
         return gemStoneLinkedList.contains(stone);
     }
+
+
 
     @Override
     public boolean upData(Player player){

@@ -73,14 +73,14 @@ public class MasterCommand extends Command {
                         return true;
                     }
                 }
-//                if("解绑".equals(strings[0])){
-//                    remove((Player) commandSender);
-//                    return true;
-//                }
+                if("解绑".equals(strings[0])){
+                    remove((Player) commandSender);
+                    return true;
+                }
                 if("help".equals(strings[0])){
                     commandSender.sendMessage("§r§c▂§6▂§e▂§a▂§b▂§a▂§e▂§6▂§c▂");
                     commandSender.sendMessage("§r§a/绑定 绑定 绑定手中的武器或盔甲");
-//                    commandSender.sendMessage("§r§a/绑定 解绑 解绑手中的武器或盔甲");
+                    commandSender.sendMessage("§r§a/绑定 解绑 解绑手中的武器或盔甲");
                     commandSender.sendMessage("§r§c▂§6▂§e▂§a▂§b▂§a▂§e▂§6▂§c▂");
                 }
             }

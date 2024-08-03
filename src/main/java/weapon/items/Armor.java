@@ -16,6 +16,8 @@ import weapon.players.effects.BaseEffect;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Armor extends BaseItem{
 
@@ -160,13 +162,6 @@ public class Armor extends BaseItem{
     }
 
     public int getToDamage() {
-//        if(item != null) {
-//            int[] tag1 = item.getNamedTag().getIntArray(tagName + "levelUp");
-//            if (tag1.length > 1) {
-//                int tup = tag1[3];
-//                return this.toDamage + tup;
-//            }
-//        }
         return toDamage;
     }
 
@@ -212,6 +207,7 @@ public class Armor extends BaseItem{
     private void reload(CompoundTag tag){
         Armor armor = Armor.getInstance(this.name);
         if(armor != null) {
+            this.config = armor.config;
             this.level = armor.level;
             this.money = armor.money;
             this.dKick = armor.dKick;
@@ -241,25 +237,28 @@ public class Armor extends BaseItem{
             }
             if(tag.contains(tagName+"levelUp")){
                 int[] tag1 = tag.getIntArray(tagName+"levelUp");
-                //                int aup = tag1[1];
-//                int hup = tag1[2];
-//                int tup = tag1[3];
-//                this.armor += aup;
-//                this.health += hup;
-//                this.toDamage += tup;
                 this.levelUp = tag1[0];
             }
             
             if (tag.contains(tagName + "upData")) {
                 for (int level = 0; level < tag.getInt(tagName + "upData"); level++) {
-                    int add1 = RsWeapon.getInstance().getUpDataAttribute(this.armor);
-                    int add2 = RsWeapon.getInstance().getUpDataAttribute(this.health);
-                    int add3 = RsWeapon.getInstance().getUpDataAttribute(this.toDamage);
-                    if (add1 > 0 && add2 > 0 && add3 > 0) {
+                    int add1 = (int) getUpDataAttribute("强化加成.护甲值",this.armor);
+                    int add2 = (int) getUpDataAttribute("强化加成.增加血量",this.health);
+                    int add3 = (int) getUpDataAttribute("强化加成.反伤",this.toDamage);
+                    int add4 = (int) getUpDataAttribute("强化加成.抗击退",this.dKick);
+                    if (add1 > 0) {
                         this.armor += add1;
-                        this.health += add2;
-                        this.toDamage += add2;
                     }
+                    if(add2 > 0) {
+                        this.health += add2;
+                    }
+                    if(add3 > 0){
+                        this.toDamage += add3;
+                    }
+                    if(add4 > 0){
+                        this.dKick += add4;
+                    }
+
                 }
             }
         }
@@ -273,6 +272,7 @@ public class Armor extends BaseItem{
     @Override
     public String[] lore(){
         ArrayList<String> lore = new ArrayList<>();
+
         lore.add("§r§2稀有度:  §r"+RsWeapon.getInstance().getLevelUpByString(levelUp).getName());
         lore.add("§r§f═§7╞════════════╡§f═");
         if(master != null){
@@ -291,9 +291,7 @@ public class Armor extends BaseItem{
         lore.add("§r§6◈§7反伤§6◈    §b+"+getToDamage() +"");
         lore.add("§r§6◈§7宝石§6◈ §7(§a"+(getCount() - getGemStones().size())+"§7)§6◈ "+getStoneString(gemStoneLinkedList));
         lore.add("§r§f═§7╞════════════╡§f═");
-        if(gemStoneLinkedList.size() > 0){
-            lore.add(skillToString(gemStoneLinkedList,false));
-        }
+        lore.add(skillToString(gemStoneLinkedList,false));
         return lore.toArray(new String[0]);
     }
 
@@ -312,7 +310,7 @@ public class Armor extends BaseItem{
      * @return 被动效果
      * */
     public LinkedList<BaseEffect> getEffects(){
-        LinkedList<BaseEffect> effects = new LinkedList<>();
+        LinkedList<BaseEffect> effects = new LinkedList<>(getArmorEffect());
         if(gemStoneLinkedList.size() > 0){
             for (GemStone stone:gemStoneLinkedList) {
                 effects.addAll(stone.getArmorEffect());
@@ -345,13 +343,18 @@ public class Armor extends BaseItem{
         }
         return false;
     }
-
     private int[] getRarity(){
+       return getRarity(-1);
+    }
+
+    private int[] getRarity(int i){
+        if(i < 0){
+            i  = new Random().nextInt(RsWeapon.rarity.size());
+        }
         Armor armor = Armor.getInstance(name);
         if(armor != null) {
-            int r = new Random().nextInt(RsWeapon.rarity.size());
-            Rarity rarity = RsWeapon.getInstance().getLevelUpByString(r);
-            return new int[]{r
+            Rarity rarity = RsWeapon.getInstance().getLevelUpByString(i);
+            return new int[]{i
                     , rarity.getRound((armor.armor))
                     , rarity.getRound(armor.health)
                     , rarity.getRound(armor.toDamage)};
@@ -360,11 +363,19 @@ public class Armor extends BaseItem{
     }
 
     @Override
-    public boolean toRarity() {
+    public boolean toRarity(int i) {
         CompoundTag tag = item.getNamedTag();
-        tag.putIntArray(Armor.tagName+"levelUp",getRarity());
+        if(tag == null){
+            tag = new CompoundTag();
+        }
+        tag.putIntArray(Armor.tagName+"levelUp",getRarity(i));
         item.setNamedTag(tag);
         return true;
+    }
+
+    @Override
+    public boolean toRarity() {
+        return toRarity(-1);
     }
 
     public static Armor getInstance(String name){
@@ -438,6 +449,8 @@ public class Armor extends BaseItem{
         int rpgPF = config.getInt("限制评级",0);
         String rpgAttribute = config.getString("限制职业(属性)","");
         Armor armor1 = new Armor(item,armor,dKick,health,toDamage,level,count,un);
+        armor1.loadSkill(config);
+        armor1.config = config;
         armor1.setRpgLevel(rpgLevel);
         armor1.setRpgPF(rpgPF);
         armor1.setRpgAttribute(rpgAttribute);
@@ -534,6 +547,7 @@ public class Armor extends BaseItem{
     public boolean canRemove(GemStone stone){
         return gemStoneLinkedList.contains(stone);
     }
+
 
     @Override
     public boolean canUpData() {

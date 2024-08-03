@@ -21,14 +21,6 @@ public class GemStone extends BaseItem{
 
     private static final String TAG_NAME = "RsWeapon_Stone";
 
-    private static final String EFFECT = "效果";
-
-    private static final String COLD = "冷却(s)";
-
-    public static final  String WEAPON = "武器";
-
-    public static final  String ARMOR = "盔甲";
-
     private boolean canShow = false;
 
     private String nameTag;
@@ -61,9 +53,7 @@ public class GemStone extends BaseItem{
 
     private double dKick;
 
-    private LinkedList<BaseEffect> effect;
 
-    private LinkedList<BaseEffect> damages;
 
 
     private GemStone(Item item,int level,int xLevel,LinkedList<String> xItem,int min,int max,int toDamage,int armor,double dKick,double kick, int health, LinkedList<BaseEffect> effect,LinkedList<BaseEffect> damages){
@@ -75,8 +65,8 @@ public class GemStone extends BaseItem{
         this.armor = armor;
         this.kick = kick;
         this.health = health;
-        this.effect = effect;
-        this.damages = damages;
+        this.skillManager.effect = effect;
+        this.skillManager.damages = damages;
         this.level = level;
         this.dKick = dKick;
         this.toDamage = toDamage;
@@ -153,43 +143,6 @@ public class GemStone extends BaseItem{
         int health = config.getInt("增加血量");
         LinkedList<BaseEffect> effects = new LinkedList<>();
         LinkedList<BaseEffect> damageEffect = new LinkedList<>();
-        Object skillObject = config.get("技能");
-        if(skillObject instanceof Map){
-            Map skill = (Map) skillObject;
-            for(Object skillName:skill.keySet()){
-                if(skillName instanceof String){
-                    Skill skills = RsWeaponSkill.getSkill((String) skillName);
-                    if(skills != null){
-                        Map f = (Map) skill.get(skills.getName());
-                        if(skills.getType().equals(Skill.PASSIVE)){
-                            if(f.containsKey(EFFECT) && (int) f.get(EFFECT) > 0){
-                                effects.add(new PlayerEffect(skills.getName(),(int)f.get(EFFECT),(int)f.get(COLD)));
-                            }
-                        }else if(skills.getType().equals(Skill.ACTIVE)){
-                            if(f.containsKey(EFFECT) &&(int)f.get(EFFECT) > 0){
-                                damageEffect.add(new PlayerEffect(skills.getName(),(int)f.get(EFFECT),(int)f.get(COLD)));
-                            }
-                        }
-                    }
-                }
-            }
-        }else{
-            /* 保留旧版....*/
-            for(Skill skillName:RsWeaponSkill.getSkillList()){
-                Map f = (Map) config.get(skillName.getName());
-                if(f != null){
-                    if(skillName.getType().equals(Skill.PASSIVE)){
-                        if(f.containsKey(EFFECT) && (int) f.get(EFFECT) > 0){
-                            effects.add(new PlayerEffect(skillName.getName(),(int)f.get(EFFECT),(int)f.get(COLD)));
-                        }
-                    }else if(skillName.getType().equals(Skill.ACTIVE)){
-                        if(f.containsKey(EFFECT) && (int)f.get(EFFECT) > 0){
-                            damageEffect.add(new PlayerEffect(skillName.getName(),(int)f.get(EFFECT),(int)f.get(COLD)));
-                        }
-                    }
-                }
-            }
-        }
         Map eff = (Map) config.get("药水");
         Object obj = eff.get("己方");
         if(obj instanceof Map){
@@ -223,6 +176,8 @@ public class GemStone extends BaseItem{
         }
 
         GemStone stone = new GemStone(item,level,xLevel,xItem,min,max,toDamage,armor,dKick ,kick,health,effects,damageEffect);
+        stone.loadSkill(config);
+        stone.config = config;
         stone.setMessage(message);
         Object up = config.get("稀有度");
         int levelUp = 0;
@@ -243,7 +198,6 @@ public class GemStone extends BaseItem{
         stone.setXpf(xpf);
         stone.setxAttribute(xAttribute);
         stone.setNameTag(config.getString("名称",name));
-        stone.setLevelUp(config.getInt("稀有度",0));
         stone.setCanShow(config.getBoolean("是否在创造背包显示",false));
         return stone;
     }
@@ -329,7 +283,7 @@ public class GemStone extends BaseItem{
 
     }
 
-    static String getItemName(Item item){
+    public static String getItemName(Item item){
         CompoundTag tag = item.getNamedTag();
         return tag.getString(TAG_NAME+"name");
     }
@@ -484,82 +438,7 @@ public class GemStone extends BaseItem{
         return health;
     }
 
-    private LinkedList<BaseEffect> getDamages() {
-        return damages;
-    }
 
-    private LinkedList<BaseEffect> getEffect() {
-        return effect;
-    }
-
-    public void addSkill(Skill skill,int time,int cold){
-        if(skill.equalsUse(WEAPON)){
-            if(skill.getType().equals(Skill.ACTIVE)){
-                damages.add(new PlayerEffect(skill.getName(),time,cold));
-            }else{
-                effect.add(new PlayerEffect(skill.getName(),time,cold));
-            }
-        }else if(skill.equalsUse(ARMOR)){
-            if(!skill.getType().equals(Skill.ACTIVE)){
-                effect.add(new PlayerEffect(skill.getName(),time,cold));
-            }
-        }
-    }
-
-
-    public LinkedList<BaseEffect> getWeaponDamages(){
-        return baseEffects(damages,true,true);
-    }
-
-    public LinkedList<BaseEffect> getWeaponEffect(){
-        return baseEffects(effect,true,false);
-    }
-
-    public LinkedList<BaseEffect> getArmorDamages(){
-        return baseEffects(damages,false,true);
-    }
-
-    public LinkedList<BaseEffect> getArmorEffect(){
-        return baseEffects(effect,false,false);
-    }
-
-
-    private LinkedList<BaseEffect> baseEffects(LinkedList<BaseEffect> baseEffects, boolean isWeapon, boolean isDamage){
-        LinkedList<BaseEffect> effects = new LinkedList<>();
-        if(baseEffects.size() > 0){
-            for (BaseEffect effect:baseEffects){
-                if(isWeapon){
-                    if(isDamage){
-                        canAdd(effects, effect, WEAPON);
-                    }else{
-                        if(effect instanceof PlayerEffect){
-                            continue;
-                        }
-                        effects.add(effect);
-                    }
-                }else{
-                    if(!isDamage){
-                        canAdd(effects, effect, ARMOR);
-                    }
-                }
-            }
-        }
-        return effects;
-    }
-
-    private void canAdd(LinkedList<BaseEffect> effects, BaseEffect effect, String weapon) {
-        if(effect instanceof PlayerEffect){
-            Skill skill = RsWeaponSkill.getSkill(effect.getBufferName());
-            if(skill != null){
-                if(!skill.equalsUse(weapon)){
-                    return;
-                }
-            }else{
-                return;
-            }
-        }
-        effects.add(effect);
-    }
 
     @Override
     public boolean equals(Object obj) {
