@@ -6,7 +6,7 @@
 
     <groupId>com.smallaswater</groupId>
     <artifactId>RsWeapon</artifactId>
-    <version>1.9.1.1-修复版</version>
+    <version>1.9.8</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -84,7 +84,7 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>${project.artifactId}_v${project.version}</finalName>
+        <finalName>${project.artifactId}_v${project.version}-修复版</finalName>
         <plugins>
 
             <plugin>
