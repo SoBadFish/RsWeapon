@@ -324,9 +324,6 @@ public class OnListener implements Listener {
                 if(kick < 0){
                     kick = 0F;
                 }
-                if(damage < 0){
-                    damage = 1F;
-                }
                 event.setDamage(damage);
                 ((EntityDamageByEntityEvent) event).setKnockBack(kick);
             }
@@ -360,36 +357,36 @@ public class OnListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onShow(EntityDamageEvent event){
-        Entity entity = event.getEntity();
-        EntityDamageEvent.DamageCause cause = event.getCause();
-        if(event.isCancelled()){
-            return;
-        }
-        float damage = event.getFinalDamage();
-        if(cause == EntityDamageEvent.DamageCause.ENTITY_ATTACK){
-            String text;
-            if(entity instanceof Player){
-                if(damage < 0){
-                    damage = 0;
-                }
-              text = "§l§o§e - §c"+damage;
-            }else{
-                text = "§l§o§e - §a"+damage;
-            }
-            ShowDamageTextEvent event1 = new ShowDamageTextEvent(text,true,entity.getPosition());
-            Server.getInstance().getPluginManager().callEvent(event1);
-            if(event.isCancelled()){
-                return;
-            }
-            if(event1.isCanShow()) {
-                text = event1.getText();
-                ShowHealthText.send(event.getEntity(), text);
-            }
-        }
-
-    }
+//    @EventHandler(priority = EventPriority.HIGHEST)
+//    public void onShow(EntityDamageEvent event){
+//        Entity entity = event.getEntity();
+//        EntityDamageEvent.DamageCause cause = event.getCause();
+//        if(event.isCancelled()){
+//            return;
+//        }
+//        float damage = event.getFinalDamage();
+//        if(cause == EntityDamageEvent.DamageCause.ENTITY_ATTACK){
+//            String text;
+//            if(entity instanceof Player){
+//                if(damage < 0){
+//                    damage = 0;
+//                }
+//              text = "§l§o§e - §c"+damage;
+//            }else{
+//                text = "§l§o§e - §a"+damage;
+//            }
+//            ShowDamageTextEvent event1 = new ShowDamageTextEvent(text,true,entity.getPosition());
+//            Server.getInstance().getPluginManager().callEvent(event1);
+//            if(event.isCancelled()){
+//                return;
+//            }
+//            if(event1.isCanShow()) {
+//                text = event1.getText();
+//                ShowHealthText.send(event.getEntity(), text);
+//            }
+//        }
+//
+//    }
 
 
 

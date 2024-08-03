@@ -40,7 +40,7 @@ public class TextEntity extends Entity {
         if (this.closed) {
             return false;
         }
-        this.timing.startTiming();
+
 
         int tickDiff = currentTick - this.lastUpdate;
         if (tickDiff <= 0 && !this.justCreated) {
@@ -74,7 +74,7 @@ public class TextEntity extends Entity {
             close = true;
         }
 
-        this.timing.stopTiming();
+
         close = true;
         return hasUpdate;
     }
