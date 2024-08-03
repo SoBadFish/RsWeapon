@@ -30,11 +30,8 @@ import weapon.utils.RsWeaponSkill;
 import weapon.utils.Skill;
 import weapon.utils.math.Calculator;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -186,11 +183,11 @@ public class RsWeapon extends PluginBase {
     }
 
     private File getSkillFile(){
-        return new File(this.getDataFolder()+"/skill.yml");
+        return new File(this.getDataFolder()+ "/skill.yml");
     }
 
     private File getSuitFile(){
-        return new File(this.getDataFolder()+"/suit.yml");
+        return new File(this.getDataFolder()+ "/suit.yml");
     }
 
     private File getModFile(){

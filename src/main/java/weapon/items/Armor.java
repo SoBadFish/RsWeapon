@@ -16,8 +16,6 @@ import weapon.players.effects.BaseEffect;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class Armor extends BaseItem{
 
